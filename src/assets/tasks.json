@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "title": "task 1",
+      "type": "Telephone Call",
+      "duration": "2:10",
+      "hourlyRate": 250,
+      "total": 562.5,
+      "taskId": 1,
+      "taskEditState": "Submitted",
+      "taskCreationState": "Old"
+    },
+    {
+      "title": "task 2",
+      "type": "Research",
+      "duration": "3:24",
+      "hourlyRate": 250,
+      "total": 875,
+      "taskId": 2,
+      "taskEditState": "Submitted",
+      "taskCreationState": "Draft"
+    }
+  ]
+}
