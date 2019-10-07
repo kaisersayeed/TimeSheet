@@ -1,1 +1,65 @@
-<p> TimeSheet Entry Grid !!!</p>
+TimeSheet Entry:
+
+<p-table #dt [value]="tasks" [columns]="cols" dataKey="taskId" editMode="row">
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      <th *ngFor="let col of columns">
+        {{col.header}}
+      </th>
+      <th style="width:8em"> Actions </th> <!-- keep it static for now -->
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-columns="columns" let-rowData let-editing="editing" let-ri="rowIndex">
+    <tr [pEditableRow]="rowData">
+      <td *ngFor="let col of columns">
+        <span *ngIf="col.nonEditable"> {{col.nonEditable}} </span>
+        <span *ngIf="col.type === 'readonly'">
+          {{rowData[col.field]}}
+        </span>
+        <p-cellEditor *ngIf="col.type === 'text' || col.type === 'number' ">
+          <ng-template pTemplate="input">
+            <input pInputText [type]="col.type" [(ngModel)]="rowData[col.field]">
+          </ng-template>
+          <ng-template pTemplate="output">
+            {{rowData[col.field]}}
+          </ng-template>
+        </p-cellEditor>
+
+        <p-cellEditor *ngIf="col.type === 'dropdown'">
+          <ng-template pTemplate="input">
+            <p-dropdown [options]="col.optionItems" [(ngModel)]="rowData[col.field]" placeholder="Select Type"
+                        [style]="{'width':'100%'}"></p-dropdown>
+          </ng-template>
+          <ng-template pTemplate="output">
+            {{rowData[col.field]}}
+          </ng-template>
+        </p-cellEditor>
+        <!-- Showed error validation message -->
+        <span style="color: red" *ngIf="col.getErrorMessage && col.getErrorMessage(rowData[col.field])">
+          {{col.getErrorMessage(rowData[col.field])}}
+        </span>
+      </td>
+      <!-- Actions Table cell kept as Static for now -->
+      <td style="text-align:center">
+        <button *ngIf="!editing"
+                pButton type="button"
+                pInitEditableRow
+                icon="pi pi-pencil"
+                class="ui-button-info"
+                (click)="onRowEditInit(rowData)">
+        </button>
+        <button *ngIf="editing" pButton type="button" pSaveEditableRow icon="pi pi-check" class="ui-button-success"
+                style="margin-right: .5em" [disabled]="disableSaveButton(rowData)" (click)="onRowEditSave(rowData)"></button>
+        <button
+          pButton type="button"
+          pCancelEditableRow
+          icon="pi pi-times"
+          class="ui-button-danger"
+          (click)="onRowDelete(rowData, ri)">
+        </button>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+<br/>
+

@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {TimeSheetService} from './services/timesheet.service';
 import {Task} from './models/timesheet.model';
 import {SelectItem} from "primeng/components/common/selectitem";
+import {TaskEditState} from "./shared/timesheet.constant";
 
 @Component({
   selector: 'app-timesheet-entry',
@@ -40,5 +41,26 @@ export class TimesheetEntryComponent implements OnInit {
   validateTitleField(title: string): string | null {
     return '';
   }
+
+  disableSaveButton(task: Task): boolean {
+    return false;
+  }
+
+  onRowEditInit(task: Task) {
+    task.taskEditState = TaskEditState.Active;
+  }
+
+  onRowEditSave(task: Task) {
+
+  }
+
+  onRowDelete(task: Task, index: number) {
+    this.removeTask(task);
+  }
+
+  removeTask(task: Task) {
+    this.tasks = this.tasks.filter((t) => t.taskId !== task.taskId);
+  }
+
 }
 
