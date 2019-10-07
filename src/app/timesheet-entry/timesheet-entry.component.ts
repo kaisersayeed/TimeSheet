@@ -16,9 +16,11 @@ export class TimesheetEntryComponent implements OnInit {
   cols: any;
   errorMessages: any;
   inProgressDeleteTask: Task | null;
+  promptForDelete: boolean;
 
   constructor(private timeSheetService: TimeSheetService) {
     this.inProgressDeleteTask = null;
+    this.promptForDelete = false;
     this.taskTypes = this.timeSheetService.getTaskTypes();
 
     this.cols = [
@@ -111,10 +113,6 @@ export class TimesheetEntryComponent implements OnInit {
 
   onRowEditSave(task: Task) {
     this.processSave(task);
-  }
-
-  onRowDelete(task: Task, index: number) {
-    this.removeTask(task);
   }
 
   onRowDelete(task: Task, index: number) {
