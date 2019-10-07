@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {TimeSheetService} from './services/timesheet.service';
 import {Task} from './models/timesheet.model';
 import {SelectItem} from "primeng/components/common/selectitem";
-import {TaskEditState} from "./shared/timesheet.constant";
+import {TaskEditState, TaskCreateState} from "./shared/timesheet.constant";
 
 @Component({
   selector: 'app-timesheet-entry',
@@ -34,24 +34,64 @@ export class TimesheetEntryComponent implements OnInit {
     ];
   }
 
-  validateDuration(duration: string): string | null {
-    return '';
-  }
+  convertDurationIntoHours = (duration: String): number => {
+    const quarter: number = 0.25;
+    const half: number = 0.5;
+    const threeFourth: number = 0.75;
+    const full: number = 1;
 
-  validateTitleField(title: string): string | null {
-    return '';
-  }
+    let splitDuration: string[] = duration.split(':');
+    let hour: number = +splitDuration[0] || 0;
+    let minute: number = +splitDuration[1] || 0;
+    let convertedHour: number = hour;
 
-  disableSaveButton(task: Task): boolean {
-    return false;
-  }
+    if (minute > 0 && minute <= 15) {
+      convertedHour = hour + quarter;
+    } else if (minute > 15 && minute <= 30) {
+      convertedHour = hour + half;
+    } else if (minute > 30 && minute <= 45) {
+      convertedHour = hour + threeFourth;
+    } else if (minute > 45 && minute <= 60) {
+      convertedHour = hour + full;
+    }
+    return convertedHour;
+  };
 
   onRowEditInit(task: Task) {
     task.taskEditState = TaskEditState.Active;
   }
 
-  onRowEditSave(task: Task) {
+  validateDuration(duration: string): string | null {
+    const durationFormatPatten: RegExp = /^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$/g;
+    const found: string[] = duration.match(durationFormatPatten);
+    return found && found.length > 0 ? null : "provide hh:mm format";
+  }
 
+  disableSaveButton(task: Task): boolean {
+    const titleFieldValidationError: boolean = this.validateColumn(this.validateTitleField, task.title);
+    const durationFieldValidationError: boolean = this.validateColumn(this.validateDuration, task.duration);
+    return titleFieldValidationError || durationFieldValidationError;
+  }
+
+  validateTitleField(title: string): string | null {
+    return title && title !== '' ? null : 'title is required';
+  }
+
+  validateColumn(hasAnyErrors: (colValue: string) => string | null, colFieldVal: any) {
+    const hasError: string | null = hasAnyErrors(colFieldVal);
+    return hasError ? true : false;
+  }
+
+  processSave(task: Task) {
+    const convertedHour: number = this.convertDurationIntoHours(task.duration);
+    task.total = task.hourlyRate * convertedHour;
+    task.taskEditState = TaskEditState.Submitted;
+    task.taskCreateState = TaskCreateState.Old;
+    console.log('submitted   ', task, this.tasks);
+  };
+
+  onRowEditSave(task: Task) {
+    this.processSave(task);
   }
 
   onRowDelete(task: Task, index: number) {
