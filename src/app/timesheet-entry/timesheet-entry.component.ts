@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {TimeSheetService} from './services/timesheet.service';
 import {Task} from './models/timesheet.model';
 import {SelectItem} from "primeng/components/common/selectitem";
-import {TaskEditState, TaskCreateState} from "./shared/timesheet.constant";
+import {TaskEditState, TaskCreateState, TableFieldNames} from "./shared/timesheet.constant";
 import * as uuid from 'uuid';
 
 @Component({
@@ -14,25 +14,35 @@ export class TimesheetEntryComponent implements OnInit {
   tasks: Task[];
   taskTypes: SelectItem[];
   cols: any;
+  errorMessages: any;
+  inProgressDeleteTask: Task | null;
 
   constructor(private timeSheetService: TimeSheetService) {
+    this.inProgressDeleteTask = null;
+    this.taskTypes = this.timeSheetService.getTaskTypes();
+
+    this.cols = [
+      {field: TableFieldNames.TaskEditState, header: 'State', type: 'readonly'},
+      {field: TableFieldNames.Title, header: 'Title', type: 'text', getErrorMessage: this.validateTitleField},
+      {field: TableFieldNames.Type, header: 'Type', type: 'dropdown', optionItems: this.taskTypes},
+      {field: TableFieldNames.Duration, header: 'Duration', type: 'text', getErrorMessage: this.validateDuration},
+      {field: TableFieldNames.HourlyRate, header: 'Hourly Rate', type: 'number', nonEditable: '$'},
+      {field: TableFieldNames.Total, header: 'Total', type: 'readonly', nonEditable: '$'},
+    ];
+
+    this.initFieldErrors();
+  }
+
+  initFieldErrors() {
+    this.errorMessages = {};
+    this.errorMessages[TableFieldNames.Duration] = 'Provide duration in h:mm or hh:mm format';
+    this.errorMessages[TableFieldNames.Title] = 'Title is required';
   }
 
   ngOnInit() {
     this.timeSheetService.getDefaultTaskList().then((tasks) => {
       this.tasks = tasks;
     });
-
-    this.taskTypes = this.timeSheetService.getTaskTypes();
-
-    this.cols = [
-      {field: 'taskEditState', header: 'State', type: 'readonly'},
-      {field: 'title', header: 'Title', type: 'text', getErrorMessage: this.validateTitleField},
-      {field: 'type', header: 'Type', type: 'dropdown', optionItems: this.taskTypes},
-      {field: 'duration', header: 'Duration', type: 'text', getErrorMessage: this.validateDuration},
-      {field: 'hourlyRate', header: 'Hourly Rate', type: 'number', nonEditable: '$'},
-      {field: 'total', header: 'Total', type: 'readonly', nonEditable: '$'},
-    ];
   }
 
   convertDurationIntoHours = (duration: String): number => {
@@ -62,25 +72,34 @@ export class TimesheetEntryComponent implements OnInit {
     task.taskEditState = TaskEditState.Active;
   }
 
-  validateDuration(duration: string): string | null {
-    const durationFormatPatten: RegExp = /^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$/g;
-    const found: string[] = duration.match(durationFormatPatten);
-    return found && found.length > 0 ? null : "provide hh:mm format";
-  }
-
   disableSaveButton(task: Task): boolean {
     const titleFieldValidationError: boolean = this.validateColumn(this.validateTitleField, task.title);
     const durationFieldValidationError: boolean = this.validateColumn(this.validateDuration, task.duration);
     return titleFieldValidationError || durationFieldValidationError;
   }
 
-  validateTitleField(title: string): string | null {
-    return title && title !== '' ? null : 'title is required';
-  }
+  validateDuration = (duration: string): string | null => {
+    // regex accepts 00:00 to 23:59
+    const durationFormatPatten: RegExp = /^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$/g;
+    const found: string[] = duration.match(durationFormatPatten);
+    return found && found.length > 0 ? null : this.errorMessages[TableFieldNames.Duration];
+  };
+
+  validateTitleField = (title: string): string | null => {
+    return title && title !== '' ? null : this.errorMessages[TableFieldNames.Title];
+  };
 
   validateColumn(hasAnyErrors: (colValue: string) => string | null, colFieldVal: any) {
     const hasError: string | null = hasAnyErrors(colFieldVal);
     return hasError ? true : false;
+  }
+
+  execDelAction(shouldDel: boolean) {
+    if (shouldDel) {
+      this.removeTask(this.inProgressDeleteTask);
+    }
+    this.promptForDelete = false;
+    this.inProgressDeleteTask = null;
   }
 
   processSave(task: Task) {
@@ -88,7 +107,6 @@ export class TimesheetEntryComponent implements OnInit {
     task.total = task.hourlyRate * convertedHour;
     task.taskEditState = TaskEditState.Submitted;
     task.taskCreateState = TaskCreateState.Old;
-    console.log('submitted   ', task, this.tasks);
   };
 
   onRowEditSave(task: Task) {
@@ -99,21 +117,30 @@ export class TimesheetEntryComponent implements OnInit {
     this.removeTask(task);
   }
 
+  onRowDelete(task: Task, index: number) {
+    this.inProgressDeleteTask = task;
+    if (task.taskCreateState === TaskCreateState.Draft) {
+      this.removeTask(task);
+      this.inProgressDeleteTask = null;
+    } else {
+      this.promptForDelete = true;
+    }
+  }
+
   removeTask(task: Task) {
     this.tasks = this.tasks.filter((t) => t.taskId !== task.taskId);
   }
 
   newRow() {
-    let newTask: Task  = {
-      title: '',
-      type: '',
-      duration: '',
-      hourlyRate: 250,
-      total: 255,
-      taskId: uuid.v4(),
-      taskEditState: TaskEditState.Active,
-      taskCreateState: TaskCreateState.Draft
-    };
+    const newTask: Task | any = {};
+    newTask[TableFieldNames.TaskId] = uuid.v4();
+    newTask[TableFieldNames.Title] = '';
+    newTask[TableFieldNames.Type] = '';
+    newTask[TableFieldNames.Duration] = '';
+    newTask[TableFieldNames.HourlyRate] = 250;
+    newTask[TableFieldNames.Total] = 0;
+    newTask[TableFieldNames.TaskEditState] = TaskEditState.Active;
+    newTask[TableFieldNames.TaskCreateState] = TaskCreateState.Draft;
     return newTask;
   }
 

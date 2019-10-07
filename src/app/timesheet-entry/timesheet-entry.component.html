@@ -64,3 +64,20 @@ TimeSheet Entry:
 <br/>
 <button pButton type="button"icon="pi pi-plus" class="ui-button-info" [label]="'Add'"
         pAddRow [table]="dt" [newRow]="newRow()"></button>
+
+<!-- Prompt Dialog -->
+
+<p-dialog header="Delete Task" [(visible)]="promptForDelete">
+  <div>
+    Are you sure you want to delete this timesheet entry
+  </div>
+  <div>
+    <button (click)="execDelAction(true)">
+      Yes
+    </button>
+    <button (click)="execDelAction(false)">
+      No
+    </button>
+  </div>
+</p-dialog>
+
