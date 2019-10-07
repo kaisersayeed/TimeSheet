@@ -10,10 +10,12 @@ import {TableModule} from 'primeng/table';
 import {DropdownModule} from 'primeng/dropdown';
 import {ButtonModule} from 'primeng/button';
 import {DialogModule} from "primeng/dialog";
+import { AddRowDirective } from './directives/add-row.directive';
 
 @NgModule({
   declarations: [
     TimesheetEntryComponent,
+    AddRowDirective,
   ],
   imports: [
     CommonModule,

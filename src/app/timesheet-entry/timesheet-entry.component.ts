@@ -3,6 +3,7 @@ import {TimeSheetService} from './services/timesheet.service';
 import {Task} from './models/timesheet.model';
 import {SelectItem} from "primeng/components/common/selectitem";
 import {TaskEditState, TaskCreateState} from "./shared/timesheet.constant";
+import * as uuid from 'uuid';
 
 @Component({
   selector: 'app-timesheet-entry',
@@ -100,6 +101,20 @@ export class TimesheetEntryComponent implements OnInit {
 
   removeTask(task: Task) {
     this.tasks = this.tasks.filter((t) => t.taskId !== task.taskId);
+  }
+
+  newRow() {
+    let newTask: Task  = {
+      title: '',
+      type: '',
+      duration: '',
+      hourlyRate: 250,
+      total: 255,
+      taskId: uuid.v4(),
+      taskEditState: TaskEditState.Active,
+      taskCreateState: TaskCreateState.Draft
+    };
+    return newTask;
   }
 
 }
